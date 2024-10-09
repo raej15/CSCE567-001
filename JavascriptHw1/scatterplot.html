@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	  <!-- D3 javascript library for creating visualizations-->
+		<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<head>
+	<body>
+	  <script>
+			var charth = 400;
+			var chartw = 600;
+			var buffer = 20;
+			var maxx = 10;
+            d3.csv("https://data.cityofchicago.org/api/views/2dn2-x66j/rows.csv",
+                function(data) {
+                    d3.select("body")
+                        .append("svg")
+                        .attr("width", chartw + 2 * buffer)
+                        .attr("height", charth + 2 * buffer)
+                        .attr("id", "scatter");
+
+                    var maxy = d3.max( data, function(d) { return +d['SAT_Grade_11_Score_School_Avg']; })
+                    var yscale = d3.scaleLinear().domain([0,maxy]).range([charth,0]);
+                    console.log(maxy);
+
+                    d3.select("#scatter")
+                    .append("g")
+                        .call(d3.axisLeft(yscale))
+                        .attr("transform","translate(" + buffer + ", " + buffer +")");
+
+                    var maxx = d3.max( data, function(d) { return +d['Average_Length_Suspension_Year_2_Pct']; })
+                    var xscale = d3.scaleLinear().domain([0,maxx]).range([0,chartw]);
+    
+                    d3.select("#scatter")
+                    .append("g")
+                        .call(d3.axisBottom(xscale))
+                        .attr("transform","translate(" + buffer + "," + (buffer + charth) + ")");
+                    d3.select("#scatter")
+                    .selectAll()
+                        .data(data)
+                        .enter()
+                        .append("circle")
+                        .transition()
+                        .duration(2000)
+                        .attr("cx", function(d) { return buffer + xscale(d['Average_Length_Suspension_Year_2_Pct']); })
+                        .attr("cy", function(d) { return buffer + yscale(d['SAT_Grade_11_Score_School_Avg']); })
+                        .attr("r", 5)
+                        .attr("fill", "blue")
+                        .selection()  // if we're using the transition above, then we need to add
+                                    // this to make it append the title to the circle (not the transition)
+                        .append("title")
+                        .text(function(d) { return "x = " + d['Average_Length_Suspension_Year_2_Pct'] + "y = " + d['SAT_Grade_11_Score_School_Avg'];});
+
+                        
+                })
+
+		</script>
+	</body>
+	
+</html>

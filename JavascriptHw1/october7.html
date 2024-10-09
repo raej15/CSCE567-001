@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	  <!-- D3 javascript library for creating visualizations-->
+		<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
+	<head>
+	<body>
+		<script>
+		  var chartw = 800;
+			var charth = 300;
+			var buffer = 100;
+			d3.csv("https://data.cityofchicago.org/api/views/2dn2-x66j/rows.csv",
+			    function(data) {
+  					   // plot Adult-Use Products Sold over the given time period
+						 d3.select("body")
+						   .append("svg")
+							 .attr("height", charth + 2* buffer)
+							 .attr("width", chartw + 2*buffer)
+							 .attr("id","lineplot");
+						                                         // + to treat the value as numeric
+						var maxy = d3.max( data, function(d) { return +d['SAT_Grade_11_Score_School_Avg']; })
+					  var yscale = d3.scaleLinear().domain([0,maxy]).range([charth,0]);
+						d3.select("#lineplot")
+						  .append("g")
+							.call(d3.axisLeft(yscale))
+							.attr("transform","translate(" + buffer +"," + buffer + ")");
+					 
+					  var minDate = new Date("1/1/2023");
+					  var maxx = d3.max( data , function(d) { return d3.timeDay.count(minDate, 
+                                                                     new Date("" + d['Week Ending']));});	
+					  var maxDate = d3.utcDay.offset(minDate, maxx);
+					  var xscale = d3.scaleTime().domain([minDate, maxDate]).range([0,chartw]);
+					  d3.select("#lineplot")
+					    .append("g")
+						  .call(d3.axisBottom(xscale))
+						  .attr("transform","translate(" + buffer + "," + (buffer + charth) +")");
+						
+					 	d3.select("#lineplot")
+						  .append("path")
+						  .datum(data) // datum treats the values as a single unit
+							             // data treats them as separate values
+							.attr("d", d3.line()
+							              .x(function(d) {
+														     return buffer + d3.timeDay.count(minDate,
+                                                   new Date("" + d['Week Ending'])) * chartw/maxx;
+																		})
+                             .y(function(d) { return buffer + charth - d['Adult-Use Products Sold'] *
+														                                              charth / maxy;})	
+															.curve(d3.curveLinear))
+               .style("stroke","blue")
+							 .style("fill","none")
+							 .style("stroke-width",2);
+   															
+						 d3.select("#lineplot")
+               .selectAll()
+               .data(data)
+               .enter()
+ 							 .append("circle")
+					     .attr("cx", function(d) {
+														     return buffer + d3.timeDay.count(minDate,
+                                                   new Date("" + d['Week Ending'])) * chartw/maxx;
+																		})
+						  	.attr("cy", function(d) { return buffer + charth - d['Adult-Use Products Sold'] *
+														                                              charth / maxy;})
+							 .attr("r","5")
+						   .style("opacity","0")
+							 .append("title")
+							 .text(function(d) { return d['Adult-Use Products Sold'];});
+			})
+		</script>
+	</body>
+</html>
+
+
+
+
