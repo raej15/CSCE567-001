@@ -18,13 +18,21 @@
                 font-family: sans-serif;
                 font-size: .7rem;
            }
+           summary {
+               font-family: sans-serif;
+               font-size: 1rem;
+           }
+           h1 {
+               font-family: sans-serif;
+               font-size: 1.5rem;
+           }
         </style>
     </head>
 	<body>
         <h1>Chicago Public Schools</h1>
         <summary>
             The vertical axis is 11th grade SAT scores and the horizontal axis is student attendance percentage.<br/>
-            The color of the circle represents the level of family involvement in the school, with green being very strong involvement and red being very weak involvment.<br/>
+            The color of the circle represents the type of school (charter, small, magnet, etc.).<br/><br/>
             The dataset can be found here: <a href="https://catalog.data.gov/dataset/chicago-public-schools-school-progress-reports-sy2324">Chicago Public Schools</a>
         </summary>
 	  <script>
@@ -40,6 +48,7 @@
                 function(data) {
                     var xAttr = 'Student_Attendance_Year_1_Pct';
                     var yAttr = 'SAT_Grade_11_Score_School_Avg';
+                    var colorAttr = 'School_Type';
                     
                     d3.select("body")
                         .append("svg")
@@ -64,14 +73,25 @@
                         .call(d3.axisBottom(xscale))
                         .attr("transform","translate(" + buffer + "," + (buffer + charth) + ")");
                     
-                    var color_table = {
-                        'VERY STRONG' : 'forestgreen',
-                        'STRONG'   : 'orange',
-                        'NEUTRAL'   : 'gold',
-                        'WEAK'   : 'salmon',
-                        'VERY WEAK'   : 'maroon',
-                        'NOT ENOUGH DATA': 'grey',
-                    };
+                   
+
+                    const dotColor = d3.scaleOrdinal().range(
+                        ["#629cd6",
+"#6ee063",
+"#d14485",
+"gold",
+"#736ac6",
+"#7db441",
+"#4bb18d",
+"#a26b3b",
+"#cd4244",
+"#dd7534",
+"#5f7c35",
+"#d0de4b",
+"#c68fa6"]
+                        
+                    );
+
                     d3.select("#scatter")
                     .selectAll()
                         .data(data)
@@ -82,8 +102,8 @@
                         .attr("cx", function(d) { return buffer + xscale(d[xAttr]); })
                         .attr("cy", function(d) { return buffer + yscale(d[yAttr]); })
                         .attr("r", 5)
-                        .attr("fill", function(d, i){
-                            return color_table[d['School_Survey_Involved_Families']]; // modified
+                        .attr("fill", function(d){
+                            return dotColor(d[colorAttr]); // modified
                         })
                         .attr("opacity", 0.7)
                         .attr("stroke", "darkgrey")
@@ -104,11 +124,10 @@
                                     .duration(100)
                                     .style("opacity", 1);
                             div.html(
-                                d['Long_Name'] + "<br/>" +
-                                "Family Involvment: " + d['School_Survey_Involved_Families'] + "<br/>" +
-                                xAttr + ": " + d3.format(".2f")(d[xAttr]) + "<br/>" + 
-                                yAttr + ": " + d3.format(".2f")(d[yAttr])
-                                )
+                                d['Long_Name']  + "<br/>" + 
+                                "School Type: " + d[colorAttr] + "<br/>" + 
+                                "Student Attendance: " + d3.format(".2f")(d[xAttr]) + "<br/>" + 
+                                "SAT Score: " + d[yAttr])
                                 .style("left", (d3.event.pageX + 15) + "px")
                                 .style("top", (d3.event.pageY - 15) + "px");
                         })
@@ -123,9 +142,9 @@
                         })     
                         .append("title")
                         .text(function(d) { return d['Long_Name']  +
-                        "\nFamily Involvment: " + d['School_Survey_Involved_Families'] + "\n" +
-                        xAttr + ": " + d3.format(".2f")(d[xAttr]) + "\n" +
-                        yAttr + ": " + d[yAttr]
+                        "\nSchool Type: " + d[colorAttr] + "\n" +
+                        "Student Attendance: " + d3.format(".2f")(d[xAttr]) + "\n" +
+                        "SAT Score: " + d[yAttr]
                         })
                         
                         ;
