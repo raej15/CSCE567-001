@@ -3,21 +3,51 @@
 	<head>
 	  <!-- D3 javascript library for creating visualizations-->
 		<script type="text/javascript" src="https://d3js.org/d3.v4.min.js"></script>
-	<head>
+        
+        <!-- Style for mouseover events -->
+        <style>
+            div.tooltip {
+                position: absolute;
+                text-align: left;
+                padding: .2rem;
+                background: lightgrey;
+                color: black;
+                border: 0.5px solid dimgray;
+                border-radius: 2px;
+                pointer-events: none;
+                font-family: sans-serif;
+                font-size: .7rem;
+           }
+        </style>
+    </head>
 	<body>
+        <h1>Chicago Public Schools</h1>
+        <summary>
+            The vertical axis is 11th grade SAT scores and the horizontal axis is student attendance percentage.<br/>
+            The color of the circle represents the level of family involvement in the school, with green being very strong involvement and red being very weak involvment.<br/>
+            The dataset can be found here: <a href="https://catalog.data.gov/dataset/chicago-public-schools-school-progress-reports-sy2324">Chicago Public Schools</a>
+        </summary>
 	  <script>
 			var charth = 400;
 			var chartw = 600;
 			var buffer = 50;
+
+            var div = d3.select("body").append("div")
+                        .attr("class", "tooltip")
+                        .style("opacity", 0);
+            
             d3.csv("https://data.cityofchicago.org/api/views/2dn2-x66j/rows.csv",
                 function(data) {
+                    var xAttr = 'Student_Attendance_Year_1_Pct';
+                    var yAttr = 'SAT_Grade_11_Score_School_Avg';
+                    
                     d3.select("body")
                         .append("svg")
                         .attr("width", chartw + 2 * buffer)
                         .attr("height", charth + 2 * buffer)
                         .attr("id", "scatter");
 
-                    var maxy = d3.max( data, function(d) { return +d['SAT_Grade_11_Score_School_Avg']; })
+                    var maxy = d3.max( data, function(d) { return +d[yAttr]; })
                     var yscale = d3.scaleLinear().domain([0,maxy]).range([charth,0]);
                     console.log(maxy);
 
@@ -26,7 +56,7 @@
                         .call(d3.axisLeft(yscale))
                         .attr("transform","translate(" + buffer + ", " + buffer +")");
 
-                    var maxx = d3.max( data, function(d) { return +d['Suspensions_Per_100_Students_Year_2_Pct']; })
+                    var maxx = d3.max( data, function(d) { return +d[xAttr]; })
                     var xscale = d3.scaleLinear().domain([0,maxx]).range([0,chartw]);
     
                     d3.select("#scatter")
@@ -35,9 +65,11 @@
                         .attr("transform","translate(" + buffer + "," + (buffer + charth) + ")");
                     
                     var color_table = {
-                        'STRONG'   : 'green',
-                        'NEUTRAL'   : 'orange',
-                        'WEAK'   : 'red',
+                        'VERY STRONG' : 'forestgreen',
+                        'STRONG'   : 'orange',
+                        'NEUTRAL'   : 'gold',
+                        'WEAK'   : 'salmon',
+                        'VERY WEAK'   : 'maroon',
                         'NOT ENOUGH DATA': 'grey',
                     };
                     d3.select("#scatter")
@@ -47,20 +79,56 @@
                         .append("circle")
                         .transition()
                         .duration(2000)
-                        .attr("cx", function(d) { return buffer + xscale(d['Suspensions_Per_100_Students_Year_2_Pct']); })
-                        .attr("cy", function(d) { return buffer + yscale(d['SAT_Grade_11_Score_School_Avg']); })
+                        .attr("cx", function(d) { return buffer + xscale(d[xAttr]); })
+                        .attr("cy", function(d) { return buffer + yscale(d[yAttr]); })
                         .attr("r", 5)
                         .attr("fill", function(d, i){
                             return color_table[d['School_Survey_Involved_Families']]; // modified
                         })
-                        .attr("d", function (d) {
-                            return arc(d);
-                        })
+                        .attr("opacity", 0.7)
+                        .attr("stroke", "darkgrey")
+                        .attr("stroke-width", 1)
+                        //.attr("d", function (d) {
+                          //  return arc(d);
+                        //})
                         
                         .selection()  // if we're using the transition above, then we need to add
                                     // this to make it append the title to the circle (not the transition)
+            
+                        .on('mouseover', function (d, i) {
+                            d3.select(this).transition()
+                                    .duration('100')
+                                    .attr("r", 7);
+                            //Makes box appear
+                            div.transition()
+                                    .duration(100)
+                                    .style("opacity", 1);
+                            div.html(
+                                d['Long_Name'] + "<br/>" +
+                                "Family Involvment: " + d['School_Survey_Involved_Families'] + "<br/>" +
+                                xAttr + ": " + d3.format(".2f")(d[xAttr]) + "<br/>" + 
+                                yAttr + ": " + d3.format(".2f")(d[yAttr])
+                                )
+                                .style("left", (d3.event.pageX + 15) + "px")
+                                .style("top", (d3.event.pageY - 15) + "px");
+                        })
+                        .on('mouseout', function (d, i) {
+                            d3.select(this).transition()
+                                    .duration('200')
+                                    .attr("r", 5);
+                            //makes box disappear
+                            div.transition()
+                                    .duration('200')
+                                    .style("opacity", 0);
+                        })     
                         .append("title")
-                        .text(function(d) { return "x = " + d['Suspensions_Per_100_Students_Year_2_Pct'] + "y = " + d['SAT_Grade_11_Score_School_Avg'];});
+                        .text(function(d) { return d['Long_Name']  +
+                        "\nFamily Involvment: " + d['School_Survey_Involved_Families'] + "\n" +
+                        xAttr + ": " + d3.format(".2f")(d[xAttr]) + "\n" +
+                        yAttr + ": " + d[yAttr]
+                        })
+                        
+                        ;
 
                         
                 })
