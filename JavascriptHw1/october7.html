@@ -25,11 +25,8 @@
 							.call(d3.axisLeft(yscale))
 							.attr("transform","translate(" + buffer +"," + buffer + ")");
 					 
-					  var minDate = new Date("1/1/2023");
-					  var maxx = d3.max( data , function(d) { return d3.timeDay.count(minDate, 
-                                                                     new Date("" + d['Week Ending']));});	
-					  var maxDate = d3.utcDay.offset(minDate, maxx);
-					  var xscale = d3.scaleTime().domain([minDate, maxDate]).range([0,chartw]);
+					  var maxx = d3.max( data, function(d) { return +d['Average_Length_Suspension_Year_2_Pct']; })	
+					  var xscale = d3.scaleLinear().domain([0,maxx]).range([0,charth])
 					  d3.select("#lineplot")
 					    .append("g")
 						  .call(d3.axisBottom(xscale))

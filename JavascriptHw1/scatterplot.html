@@ -8,8 +8,7 @@
 	  <script>
 			var charth = 400;
 			var chartw = 600;
-			var buffer = 20;
-			var maxx = 10;
+			var buffer = 50;
             d3.csv("https://data.cityofchicago.org/api/views/2dn2-x66j/rows.csv",
                 function(data) {
                     d3.select("body")
@@ -27,13 +26,20 @@
                         .call(d3.axisLeft(yscale))
                         .attr("transform","translate(" + buffer + ", " + buffer +")");
 
-                    var maxx = d3.max( data, function(d) { return +d['Average_Length_Suspension_Year_2_Pct']; })
+                    var maxx = d3.max( data, function(d) { return +d['Suspensions_Per_100_Students_Year_2_Pct']; })
                     var xscale = d3.scaleLinear().domain([0,maxx]).range([0,chartw]);
     
                     d3.select("#scatter")
                     .append("g")
                         .call(d3.axisBottom(xscale))
                         .attr("transform","translate(" + buffer + "," + (buffer + charth) + ")");
+                    
+                    var color_table = {
+                        'STRONG'   : 'green',
+                        'NEUTRAL'   : 'orange',
+                        'WEAK'   : 'red',
+                        'NOT ENOUGH DATA': 'grey',
+                    };
                     d3.select("#scatter")
                     .selectAll()
                         .data(data)
@@ -41,14 +47,20 @@
                         .append("circle")
                         .transition()
                         .duration(2000)
-                        .attr("cx", function(d) { return buffer + xscale(d['Average_Length_Suspension_Year_2_Pct']); })
+                        .attr("cx", function(d) { return buffer + xscale(d['Suspensions_Per_100_Students_Year_2_Pct']); })
                         .attr("cy", function(d) { return buffer + yscale(d['SAT_Grade_11_Score_School_Avg']); })
                         .attr("r", 5)
-                        .attr("fill", "blue")
+                        .attr("fill", function(d, i){
+                            return color_table[d['School_Survey_Involved_Families']]; // modified
+                        })
+                        .attr("d", function (d) {
+                            return arc(d);
+                        })
+                        
                         .selection()  // if we're using the transition above, then we need to add
                                     // this to make it append the title to the circle (not the transition)
                         .append("title")
-                        .text(function(d) { return "x = " + d['Average_Length_Suspension_Year_2_Pct'] + "y = " + d['SAT_Grade_11_Score_School_Avg'];});
+                        .text(function(d) { return "x = " + d['Suspensions_Per_100_Students_Year_2_Pct'] + "y = " + d['SAT_Grade_11_Score_School_Avg'];});
 
                         
                 })
